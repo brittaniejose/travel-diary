@@ -10,16 +10,26 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       firstName: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        notNull: true,
+        notEmpty: true
       },
       lastName: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        notNull: true,
+        notEmpty: true
       },
       email: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        unique: true,
+        isEmail: true
       },
       password: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        notNull: true,
+        notEmpty: true,
+        min: 6,
+        max: 23
       },
       createdAt: {
         allowNull: false,

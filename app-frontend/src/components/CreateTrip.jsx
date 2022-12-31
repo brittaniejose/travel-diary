@@ -1,6 +1,6 @@
 import React from 'react'
 
-function AddTrip() {
+function CreateTrip({token}) {
   return (
     <div>
       Add Trip Form
@@ -8,4 +8,4 @@ function AddTrip() {
   )
 }
 
-export default AddTrip
+export default CreateTrip

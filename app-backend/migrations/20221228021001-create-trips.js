@@ -15,6 +15,9 @@ module.exports = {
       endDate: {
         type: Sequelize.DATEONLY
       },
+      name: {
+        type: Sequelize.STRING
+      },
       userID: {
         type: Sequelize.INTEGER,
         references: {

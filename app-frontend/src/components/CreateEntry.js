@@ -1,6 +1,6 @@
 import React from 'react'
 
-function CreateEntry() {
+function CreateEntry({token}) {
   return (
     <div>
       Create Entry Form

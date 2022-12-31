@@ -19,10 +19,10 @@ module.exports = {
         type: Sequelize.STRING
       },
       photos: {
-        type: Sequelize.ARRAY(Sequelize.INTEGER)
+        type: Sequelize.ARRAY(Sequelize.STRING)
       },
       locations: {
-        type: Sequelize.ARRAY(Sequelize.INTEGER)
+        type: Sequelize.ARRAY(Sequelize.STRING)
       },
       tripID: {
         type: Sequelize.INTEGER,
