@@ -107,8 +107,28 @@ function CreateEntry({ isLoaded }) {
   };
   
 
-  const _handleSubmit = () => {
+  const _handleSubmit = async (e) => {
     // post route including token here
+    e.preventDefault();
+
+    const newEntry = {
+      date: date,
+      title: title,
+      content: content,
+      photos: entryImages,
+      locations: locationsArray,
+    }
+
+    const response = await fetch(`http://localhost:4000/entries/${tripID}/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: postToken },
+      body: JSON.stringify(newEntry)
+    })
+
+    const resEntry = await response.json();
+    console.log(resEntry, 'create entry post response')
+    navigate(`/entries/${tripID}`);
+
   };
 
   if (!isLoaded) return <div>Loading...</div>;
