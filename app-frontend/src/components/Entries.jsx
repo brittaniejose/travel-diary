@@ -1,64 +1,92 @@
-import React, { useEffect, useState } from "react";
-import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
+import localforage from "localforage";
 
-function Entries({token}) {
+function Entries() {
   const [entries, setEntries] = useState([]);
+  const [signupError, setSignupError] = useState(false);
+  const [loginError, setLoginError] = useState(false);
+  const [noEntriesMsg, setNoEntriesMsg] = useState(false);
+  const [isPending, setIsPending] = useState(false);
   const navigate = useNavigate();
-  const tripID = useSelector((state) => state.tripManager.tripID)
+  const asyncValue = useRef();
+  const { tripID } = useParams();
 
   useEffect(() => {
-      const authToken = token === "" ? "" : `Bearer ${token}`;
-      getEntries(authToken);
+    setIsPending(true);
+    setTimeout(() => {
+      localforage.getItem("token").then(function (token) {
+        asyncValue.current = token;
+        if (asyncValue.current === null) {
+          const authToken = "";
+          getEntries(authToken);
+        } else {
+          const authToken = asyncValue.current;
+          const token = `Bearer ${authToken}`;
+          getEntries(token);
+        }
+      });
+    }, 2000);
   }, []);
 
-  
-
-  // console.log(authToken, 'authtoken @ trips ln 16')
-
-const getEntries = (token) => {
-  fetch(`http://localhost:4000/trips/${tripID}/entries`, {
-    method: "GET",
-    headers: { "Content-Type": "application/json", Authorization: token },
-  })
-    .then((response) => response.json())
-    .then((entries) => {
-      if (entries.message === "Access Denied") {
-        navigate('/');
-        console.log('no token')
-      } else {
-        setEntries(entries)
-      }
+  const getEntries = (token) => {
+    fetch(`http://localhost:4000/entries/${tripID}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json", Authorization: token },
+    })
+      .then((response) => response.json())
+      .then((entries) => {
+        if (entries.message === "Access Denied") {
+          console.log("no token");
+          setSignupError(true);
+          setIsPending(false);
+          setTimeout(() => {
+            navigate("/");
+          }, 2000);
+        } else if (entries.message === "Token Expired") {
+          setLoginError(true);
+          setIsPending(false);
+          setTimeout(() => {
+            navigate("/");
+          }, 2000);
+        } else {
+          setEntries(entries);
+          setIsPending(false);
+          console.log(entries, "entries array from fetch");
+          if (entries.length === 0) {
+            setNoEntriesMsg(true);
+          } else {
+            setNoEntriesMsg(false);
+          }
+        }
       });
-};
-console.log(entries, "entries array from fetch");
-
-const goToCreate = () => {
-    navigate('/entry/create')
   };
 
-return (
-  <div>
-    <h1>Your Entries</h1>
-    <div className="entries">
-      {entries.map((entry) => (
-        <div key={entry.id}>
-          <div>
-          {entry.name}
+  const goToCreate = () => {
+    navigate(`/entries/${tripID}/create`);
+  };
+  if (signupError) return <p>Please signup to continue...</p>
+  if (loginError) return  <p>Your session has expired. Please login to continue...</p>
+  return (
+    <div>
+      <h1>Your Entries</h1>
+      { isPending ? <p>Loading...</p> : null }
+      { noEntriesMsg ? <p>You have no entries yet</p> : null }
+      <div className="entries">
+        {entries.map((entry) => (
+          <div key={entry.id}>
+            <div>{entry.name}</div>
+            <div>{entry.date}</div>
+            <LinkContainer to="/trips/entries/:entryID">
+              <button>See Entry</button>
+            </LinkContainer>
           </div>
-          <div>
-          {entry.date}
-          </div>
-          <LinkContainer to='/trips/entries/:entryID'>
-          <button>See Entry</button>      
-          </LinkContainer>
-        </div>
-      ))}
-      <button onClick={(e) => goToCreate(e)}>Create Entry</button>
+        ))}
+        <button onClick={(e) => goToCreate(e)}>Create Entry</button>
+      </div>
     </div>
-  </div>
-);
+  );
 }
 
-export default Entries
+export default Entries;

@@ -11,25 +11,70 @@ module.exports = {
       },
       firstName: {
         type: Sequelize.STRING,
-        notNull: true,
-        notEmpty: true
+        validate: {
+          notNull: {
+            args: [true],
+            msg: "Please enter your first name"
+          },
+          notEmpty: {
+            args: [true],
+            msg: "Please enter your first name"
+          }, 
+        }
       },
       lastName: {
         type: Sequelize.STRING,
-        notNull: true,
-        notEmpty: true
+        validate: {
+          notNull: {
+            args: [true],
+            msg: "Please enter your last name"
+          },
+          notEmpty: {
+            args: [true],
+            msg: "Please enter your last name"
+          }, 
+        }
       },
       email: {
         type: Sequelize.STRING,
-        unique: true,
-        isEmail: true
+        validate: {
+          notNull: {
+            args: [true],
+            msg: "Please enter an email"
+          },
+          notEmpty: {
+            args: [true],
+            msg: "Please enter an email"
+          },
+          unique: {
+            args: [true],
+            msg: "This email is already registered"
+          },
+          isEmail: {
+            args: [true],
+            msg: "Please enter a valid email"
+          } 
+        },
       },
       password: {
         type: Sequelize.STRING,
-        notNull: true,
-        notEmpty: true,
-        min: 6,
-        max: 23
+        validate: {
+          len: {
+            args: [6, 100],
+            msg: "The password must be at least 6 characters long"
+          },
+          notNull: {
+            args: [true],
+            msg: "Please create a password",
+          },
+          notEmpty: {
+            args: [true],
+            msg: "Please create a password"
+          },
+        }
+      },
+      icon: {
+        type: Sequelize.STRING,
       },
       createdAt: {
         allowNull: false,

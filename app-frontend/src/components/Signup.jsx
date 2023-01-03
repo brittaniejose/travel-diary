@@ -14,7 +14,7 @@ function Signup() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const newUser = {
@@ -39,18 +39,20 @@ function Signup() {
         email: email,
         password: resUser.user.password,
         token: resUser.token,
-      };
+      }
+      
       dispatch(saveUser(authenticatedUser));
       setIsPending(true);
-      const token = authenticatedUser.token;
+      const token = resUser.token;
       storeToken(token);
+      console.log(`${resUser.user.firstName} has signed up`)
       navigate("/");
     };
   };
 
 // store token in local forage so its not lost on each rerender
   const storeToken = async (token) => {
-    console.log(token, 'signup token ln 54')
+    // console.log(token, 'signup token ln 54')
     await localforage.setItem("token", token)
   };
 

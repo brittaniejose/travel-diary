@@ -32,7 +32,7 @@ app.use(cors(corsOptions));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/trips', tripRouter);
-app.use('/entry', entryRouter);
+app.use('/entries', entryRouter);
 
 
 

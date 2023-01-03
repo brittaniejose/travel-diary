@@ -1,17 +1,37 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
-import { saveTripID } from "../Redux/tripsReducer";
-import { useDispatch } from "react-redux";
+import localforage from "localforage";
 
-function Trips({token}) {
+function Trips() {
   const [trips, setTrips] = useState([]);
+  const [signupError, setSignupError] = useState(false);
+  const [loginError, setLoginError] = useState(false);
+  const [noTripsMsg, setNoTripsMsg] = useState(false);
+  const [isPending, setIsPending] = useState(false);
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const asyncValue = useRef();
 
+  // set is pending with loading message then disable inside fetch
   useEffect(() => {
-    const authToken = token === "" ? "" : `Bearer ${token}`;
-    getTrips(authToken);
+    setIsPending(true);
+    setTimeout(() => { 
+      localforage.getItem("token").then(function (token) {
+        asyncValue.current = token;
+        if (asyncValue.current === null) {
+          const authToken = "";
+          console.log(authToken, "authToken empty str trip comp ln 23");
+          getTrips(authToken);
+         } else {
+           const authToken = asyncValue.current;
+           console.log(authToken, "authToken trip comp ln 31");
+           const token = `Bearer ${authToken}`;
+           getTrips(token)
+         }
+       });
+    }, 2000);
+
   }, []);
+
 
 
 const getTrips = (token) => {
@@ -22,33 +42,47 @@ const getTrips = (token) => {
     .then((response) => response.json())
     .then((trips) => {
       if (trips.message === "Access Denied") {
-        navigate('/');
+        setSignupError(true)
+        setIsPending(false);
+        setTimeout(() => {
+          navigate('/');
+        }, 2000)
         console.log('no token')
+      } else if (trips.message === "Token Expired") {
+        setLoginError(true)
+        setIsPending(false);
+        setTimeout(() => {
+          navigate('/');
+        }, 2000)
       } else {
-        setTrips(trips)
-        // trips.forEach(trip => {
-        // dispatch(saveTrip(trip))
-        // });
+        setTrips(trips);
+        setIsPending(false);
+        if (trips.length === 0) {
+          setNoTripsMsg(true)
+        } else {
+          setNoTripsMsg(false)
+        }
       }
       });
 };
-console.log(trips, "trips array from fetch");
+console.log(trips, "trips array");
 
 const handleClick = (e, id) => {
 	const tripID = id
-	console.log(tripID)
-	dispatch(saveTripID(tripID))
-
-	navigate(`/trips/${tripID}/entries`)
+	navigate(`/entries/${tripID}`)
 }
 
 const goToCreate = () => {
   navigate('/trips/create')
 };
 
+if (signupError) return <p>Please signup to continue...</p>
+if (loginError) return  <p>Your session has expired. Please login to continue...</p>
 return (
   <div>
     <h1>Your Trips</h1>
+    { isPending ? <p>Loading...</p> : null }
+    { noTripsMsg ? <p>You have no trips yet</p> : null }
     <div className="trips">
       {trips.map((trip) => (
         <div key={trip.id}>

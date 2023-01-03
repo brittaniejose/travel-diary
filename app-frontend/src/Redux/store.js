@@ -7,6 +7,6 @@ export const store = configureStore({
         usersManager: usersReducer,
     },
     reducer: {
-        tripManager: tripsReducer
-    }
+        tripManager: tripsReducer,
+    },
 })

@@ -14,7 +14,7 @@ function Login() {
   const navigate = useNavigate();
 
 
-async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
   e.preventDefault();
 
   const existingUser = {
@@ -46,13 +46,14 @@ async function handleSubmit(e) {
     dispatch(saveUser(authenticatedUser));
     const token = authenticatedUser.token;
     storeToken(token);
+    console.log(`${resUser.user.firstName} has logged in `)
     navigate('/');
   }
 }
 
 // store token in local forage so its not lost on each rerender
 const storeToken = async (token) => {
-  console.log(token, 'login token ln 55')
+  // console.log(token, 'login token ln 55')
   await localforage.setItem("token", token)
 }
 

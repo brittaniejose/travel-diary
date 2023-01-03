@@ -1,50 +1,69 @@
 const express = require('express');
 const router = express.Router();
-const { Trips, Entries, Token } = require('../models');
+const { Trips, Token } = require('../models');
+const jwt = require('jsonwebtoken');
+
+// Auth Middleware
+
+const jwtToReqUser = function (req, res, next) {
+    console.log('req user middleware fired')
+    const token = req.headers.authorization;
+    const authToken = token.split(' ');
+    req.user = authToken[1]
+    console.log(req.user)
+    next()
+}
 
 // Trip Routes
-router.get('/', async function(req, res, next) {
-    const token = req.headers.authorization;
-    const authToken = token.split(' ');
+router.get('/', jwtToReqUser, async function(req, res, next) { 
     
-    if (authToken[1]) {
-        const jwToken = await Token.findOne({ where: { token: authToken[1] } })
+    try {
+        const jwToken = await Token.findOne({ where: { token: req.user } })
         if (jwToken) {
-            const trips = await Trips.findAll()
+            const decoded = jwt.verify(req.user, process.env.JWT_SECRET);
+            const userID = decoded.id;
+            const trips = await Trips.findAll({ where: { userID: userID }})
             res.json(trips);
         } else {
-            res.json({message: 'Access Denied'})
+            res.json({message:"Access Denied"})
+        }     
+    } catch (error) {
+        if (error.message.includes("jwt expired")) {
+            res.json({message: "Token Expired"})
         }
-    } else {
-        res.json({message: 'Access Denied'})
     }
    
 })
 
-// Create Trip Component
-router.post('/create', async function(req, res, next) {
-    const { startDate, name, endDate, userID } = req.body 
-    const trip = await Trips.create({ startDate: startDate, endDate: endDate, name: name, userID: userID });
-    res.json(trip)
-})
+// Create Trip Component routes
 
-router.get('/:tripID/entries', async function(req, res, next) {
-    const { tripID } = req.params;
-    const token = req.headers.authorization;
-    const authToken = token.split(' ');
-    
-    if (authToken[1]) {
-        const jwToken = await Token.findOne({ where: { token: authToken[1] } })
+router.get('/create', jwtToReqUser, async function(req, res) {
+    if (req.user) {
+        const jwToken = await Token.findOne({ where: { token: req.user }});
         if (jwToken) {
-            const entries = await Entries.findAll({ where: { tripID: tripID }})
-            res.json(entries);
+           res.json("Access Granted") 
         } else {
             res.json({message: 'Access Denied'})
         }
     } else {
         res.json({message: 'Access Denied'})
     }
-   
 })
+
+router.post('/create', jwtToReqUser, async function(req, res, next) {
+    const { startDate, name, endDate } = req.body;
+    
+    try {
+        const decoded = jwt.verify(req.user, process.env.JWT_SECRET);
+        const userID = decoded.id;
+        const trip = await Trips.create({ startDate, endDate, name, userID }, { validate: true });
+        res.json(trip)
+        
+    } catch (error) {
+        console.log(error)
+    } 
+})
+
+
 
 module.exports = router;
