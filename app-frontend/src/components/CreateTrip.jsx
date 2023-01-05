@@ -27,7 +27,7 @@ function CreateTrip() {
            getCreatePage(token)
          }
        });
-    }, 2000);
+    }, 1000);
   }, []);
 
   const getCreatePage = (token) => {

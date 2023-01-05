@@ -24,3 +24,13 @@ code {
 .removePhotoBtn {
   margin-left: 10px;
 }
+
+.photos {
+  width: 400px;
+  height: 400px;
+}
+
+/* .entry {
+  margin: 40px 40px 100px 40px;
+  padding: 20px 20px 100px 20px
+} */

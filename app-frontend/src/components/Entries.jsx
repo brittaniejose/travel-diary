@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { LinkContainer } from "react-router-bootstrap";
 import localforage from "localforage";
 
 function Entries() {
@@ -63,9 +62,14 @@ function Entries() {
       });
   };
 
+  const goToEntry = (id) => {
+    navigate(`/entries/${tripID}/entry/${id}`)
+  }
+
   const goToCreate = () => {
     navigate(`/entries/${tripID}/create`);
   };
+  
   if (signupError) return <p>Please signup to continue...</p>
   if (loginError) return  <p>Your session has expired. Please login to continue...</p>
   return (
@@ -76,14 +80,12 @@ function Entries() {
       <div className="entries">
         {entries.map((entry) => (
           <div key={entry.id}>
-            <div>{entry.name}</div>
+            <div>{entry.title}</div>
             <div>{entry.date}</div>
-            <LinkContainer to="/trips/entries/:entryID">
-              <button>See Entry</button>
-            </LinkContainer>
+            <button onClick={() => goToEntry(entry.id)}>See Entry</button>
           </div>
         ))}
-        <button onClick={(e) => goToCreate(e)}>Create Entry</button>
+        <button onClick={goToCreate}>Create Entry</button>
       </div>
     </div>
   );

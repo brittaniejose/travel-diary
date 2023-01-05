@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button, Form, Container, Card, Row, Col, ListGroup, ListGroupItem } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import localforage from "localforage";
@@ -22,7 +22,7 @@ function CreateEntry({ isLoaded }) {
   const [address, setAddress] = useState("");
   const [coordinates, setCoordinates] = useState({lat: null, lng: null})
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     setTimeout(() => {
       localforage.getItem("token").then(function (token) {
         asyncValue.current = token;
@@ -37,7 +37,7 @@ function CreateEntry({ isLoaded }) {
           getCreatePage(token);
         }
       });
-    }, 2000);
+    }, 1000);
   }, []);
 
   const getCreatePage = (token) => {
@@ -46,8 +46,8 @@ function CreateEntry({ isLoaded }) {
       headers: { "Content-Type": "application/json", Authorization: token },
     })
       .then((response) => response.json())
-      .then((createPage) => {
-        if (createPage.message === "Access Denied") {
+      .then((data) => {
+        if (data.message === "Access Denied") {
           navigate("/");
           console.log("no token");
         } else {
@@ -194,8 +194,7 @@ function CreateEntry({ isLoaded }) {
                   loading,
                 }) => (
                   <div>
-                    <p>Latitude: {coordinates.lat}</p>
-                    <p>Longitude: {coordinates.lng}</p>
+                    <p>Select a location</p>
                     <Form.Control
                       {...getInputProps({ placeholder: "Search a location", autoComplete: "on" })}
                     />
@@ -225,14 +224,6 @@ function CreateEntry({ isLoaded }) {
   );
 }
 
-function Map() {
-  return (
-    <>
-      <div className="places-container"></div>
-    </>
-  );
-}
 
-// <Form.Control type="text" placeholder='Search and Add Location'/>
 
 export default CreateEntry;

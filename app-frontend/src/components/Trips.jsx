@@ -19,16 +19,15 @@ function Trips() {
         asyncValue.current = token;
         if (asyncValue.current === null) {
           const authToken = "";
-          console.log(authToken, "authToken empty str trip comp ln 23");
           getTrips(authToken);
          } else {
            const authToken = asyncValue.current;
-           console.log(authToken, "authToken trip comp ln 31");
            const token = `Bearer ${authToken}`;
+          //  console.log(token, 'token ln 26 trips comp')
            getTrips(token)
          }
        });
-    }, 2000);
+    }, 1000);
 
   }, []);
 

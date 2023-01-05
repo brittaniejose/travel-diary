@@ -1,26 +1,190 @@
-import React from 'react'
-import { GoogleMap, Marker } from '@react-google-maps/api'
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import localforage from "localforage";
+import { GoogleMap, Marker } from '@react-google-maps/api';
+import Card from 'react-bootstrap/Card';
 import { useMemo } from 'react';
 
 function Entry({isLoaded}) {
+  // MESSAGE STATES
+  const [signupError, setSignupError] = useState(false);
+  const [loginError, setLoginError] = useState(false);
+  const [noEntryMsg, setNoEntryMsg] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+  const [yesPhotos, setYesPhotos] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [deleteFailure, setDeleteFailure] = useState(false);
+  // ITEM STATES
+  const [entry, setEntry] = useState({});
+  const [locationNames, setLocationNames] = useState([]);
+  const [coordinates, setCoordinates] = useState([])
+  const [postToken, setPostToken] = useState("");
+  const [trip, setTrip] = useState({})
+  const { tripID, entryID } = useParams();
+  const asyncValue = useRef();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setIsPending(true);
+    setTimeout(() => {
+      localforage.getItem("token").then(function (token) {
+        asyncValue.current = token;
+        if (asyncValue.current === null) {
+          const authToken = "";
+          getEntry(authToken);
+        } else {
+          const authToken = asyncValue.current;
+          const token = `Bearer ${authToken}`;
+          getEntry(token);
+          setPostToken(token);
+        }
+      });
+    }, 1000);
+  }, []);
+
+  const getEntry = (token) => {
+    fetch(`http://localhost:4000/entries/${tripID}/entry/${entryID}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json", Authorization: token },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.message === "Access Denied") {
+          console.log("no token");
+          setSignupError(true);
+          setIsPending(false);
+
+          setTimeout(() => {
+            navigate("/");
+          }, 2000);
+
+        } else if (data.message === "Token Expired") {
+          setLoginError(true);
+          setIsPending(false);
+
+          setTimeout(() => {
+            navigate("/");
+          }, 2000);
+
+        } else {
+          setEntry(data.entry);
+          setTrip(data.trip)
+          console.log(data.entry.locations, "locations array ln 68")
+
+          // save coordinates and location names in separate array states
+          let locNames = []
+          let coords = []
+
+          for (let i = 0; i < data.entry.locations.length; i++) {
+
+            locNames.push(data.entry.locations[i].name);
+            coords.push(data.entry.locations[i].coords);
+            
+            console.log(locNames, 'locNames ln 76')
+            console.log(coords, 'coords ln 77')
+          }
+          setLocationNames(locNames);
+          setCoordinates(coords);
+
+          setIsPending(false);
+
+          if (data.length === 0) {
+            setNoEntryMsg(true);
+          } else {
+            setNoEntryMsg(false);
+          }
+          if (data.entry.photos) {
+            setYesPhotos(true);
+          }
+        }
+      });
+    };
+    
+    const deleteEntry = () => {
+      fetch(`http://localhost:4000/entries/delete/${entryID}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: postToken },
+      })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.message === "entry deleted") {
+          setDeleteSuccess(true);
+          setDeleteFailure(false);
+          setTimeout(() => {
+            navigate(`/entries/${tripID}`);
+          }, 2000);
+        } else {
+          setDeleteFailure(true)
+        }
+      })
+    }
+
+    console.log(coordinates, 'coordinates to be passed as prop')
+  if (signupError) return <p>Please signup to continue...</p>
+  if (loginError) return  <p>Your session has expired. Please login to continue...</p>
   if (!isLoaded) return <div>Loading...</div>;
   return (
     <div>
-      Entry component showing entry date, title, content, photos, and locations
-      <Map />
+      { isPending ? <p>Loading...</p> : null }
+      { noEntryMsg ? <p>No entry found</p> : null }
+      { deleteSuccess ? <p>Entry "{entry.title}" was successfully deleted.</p> : null }
+      { deleteFailure ? <p>Failed to delete entry. Please try again later.</p> : null }
+      {/* <Card style={{ width: '60rem', height: '60rem'  }} className="entry">
+        <Card.Body> */}
+            <h2>{entry.title}</h2>
+            <h3>Trip: {trip.name}</h3>
+            <h4>{trip.startDate}-{trip.endDate}</h4>
+            <div>{entry.date}</div>
+            <div>{entry.content}</div>
+            <div >
+              {yesPhotos? entry.photos.map((photo, index) => 
+              <img key={index} className="photos" src={photo.url} alt={photo.fileName}/>
+              ) : null }
+            </div>
+            <div>
+              <span>Locations</span>
+              {locationNames.map((locName, index) => 
+                <div key={index}>{locName}</div>
+              )}
+            </div>
+          {/* </Card.Body>
+      </Card> */}
+      <p>Map is centered around first location entered. Use zoom to see other locations not in view.</p>
+      <Map coordinates={coordinates} />
+      <button onClick={deleteEntry}>Delete Entry</button>
+      <button>Edit Entry</button>
     </div>
   )
 }
-// change center to show coordinate values dynamically
-function Map() {
-  // stops map from recentering itself on each re-render
-  const center = useMemo(() => ({lat: 18.5601, lng: -68.3725}), [])
+function Map({coordinates}) {
+  // change center to show coordinate values dynamically
+  const [mapCenter, setMapCenter] = useState({})
+  const [mapCoords, setMapCoords] = useState([])
+
+  useEffect(() => {
+    setMapCoords(coordinates)
+    setMapCenter(coordinates[0])
+  }, [coordinates])
+  
+    console.log(mapCenter, 'mapcenter')
+    console.log(mapCoords, 'mapcoords')
+    console.log(coordinates, 'coordinates prop map comp')
+  
+  const markers = mapCoords.map((geoloc, index) => {
+    return <Marker key={index} position={{lat: geoloc.lat, lng: geoloc.lng}}/>
+  })
+  // // {lat: mapCenter.lat, lng: mapCenter.lng}
+
+  // // stops map from recentering itself on each re-render
+  const center = useMemo(() => ({lat: mapCenter.lat, lng: mapCenter.lng}), [])
+
   return (
     <GoogleMap zoom={10} center={center} mapContainerClassName="map-container">
-      <Marker position={{lat: 18.5601, lng: -68.3725}} />
+      {markers}
     </GoogleMap>
   )
 }
 
+{/* <Marker position={{lat: -61.9882, lng: -58.0196}} /> */}
 export default Entry
 

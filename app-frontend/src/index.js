@@ -38,7 +38,7 @@ export default function App() {
           <Route path="/entries/:tripID" element={<Entries />} />
           <Route path="/trips/create" element={<CreateTrip />} />
           <Route path="/entries/:tripID/create" element={<CreateEntry isLoaded={isLoaded}/>} />
-          <Route path="/entry/:entryID" element={<Entry isLoaded={isLoaded}/>}/>
+          <Route path="/entries/:tripID/entry/:entryID" element={<Entry isLoaded={isLoaded}/>}/>
         </Route>
       </Routes>
       </Suspense>
