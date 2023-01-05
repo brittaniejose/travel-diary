@@ -4,6 +4,8 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 require('dotenv').config();
 const cors = require('cors');
+const fileUpload = require('express-fileupload');
+
 
 const corsOptions = {
     origin: '*',
@@ -22,12 +24,16 @@ const entryRouter = require('./routes/entryRoutes');
 
 var app = express();
 
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors(corsOptions));
+app.use(fileUpload({
+    createParentPath: true
+}));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Button, Form, Container, Card, Row, Col, ListGroup, ListGroupItem } from "react-bootstrap";
+import { Button, Form, Container, Card, Row, Col, ListGroup, ListGroupItem, Badge } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import localforage from "localforage";
 import PlacesAutoComplete, {
@@ -60,14 +60,14 @@ function CreateEntry({ isLoaded }) {
     const newArray = [...photoFiles, ...e.target.files];
     setPhotoFiles(newArray)
     console.log(newArray, "photos array updated");
-    const filesAndUrls = newArray.map((file) => ({
-      ...file,
-      url: URL.createObjectURL(file),
-      fileName: file.name,
-    }));
-    const updatedArray = [...filesAndUrls];
-    console.log(updatedArray, 'files and urls array');
-    setEntryImages(updatedArray)
+    // const filesAndUrls = newArray.map((file) => ({
+    //   ...file,
+    //   url: URL.createObjectURL(file),
+    //   fileName: file.name,
+    // }));
+    // const updatedArray = [...filesAndUrls];
+    // console.log(updatedArray, 'files and urls array');
+    // setEntryImages(updatedArray)
   };
 
   const _removePhoto = (index) => {
@@ -78,13 +78,13 @@ function CreateEntry({ isLoaded }) {
     const newPhotosArr = photoArr.filter((photo) => photo !== selectedPhoto )
     console.log(newPhotosArr, 'photosArr after splice');
     
-    const objectsArr = [...entryImages]
-    const selectedImgObj = objectsArr.splice(index, 1);
-    const newObjectsArr = objectsArr.filter((imgObj) => imgObj !== selectedImgObj)
-    console.log(newObjectsArr, 'entry images after splice')
+    // const objectsArr = [...entryImages]
+    // const selectedImgObj = objectsArr.splice(index, 1);
+    // const newObjectsArr = objectsArr.filter((imgObj) => imgObj !== selectedImgObj)
+    // console.log(newObjectsArr, 'entry images after splice')
 
     setPhotoFiles([...newPhotosArr])
-    setEntryImages([...newObjectsArr])
+    // setEntryImages([...newObjectsArr])
   };
   
   const handleSelect = async (value) => {
@@ -115,7 +115,7 @@ function CreateEntry({ isLoaded }) {
       date: date,
       title: title,
       content: content,
-      photos: entryImages,
+      photos: photoFiles,
       locations: locationsArray,
     }
 
@@ -168,13 +168,13 @@ function CreateEntry({ isLoaded }) {
 
             <Form.Group className="mb-3">
               <Form.Label>Add Photos</Form.Label>
-              <Form.Control type="file" id='fileInput' onChange={_addPhotos} multiple />
+              <Form.Control type="file" id='fileInput' accept="image/*" onChange={_addPhotos} multiple />
             </Form.Group>
             <Form.Group className="mb-3" controlId="formPhotosList">
               {photoFiles.length > 0 && (
                 <ul>
                   {photoFiles.map((photoFile, index) => 
-                    <li key={photoFile.name}>{photoFile.name}<span className="removePhotoBtn" onClick={() => _removePhoto(index)}>X</span></li>
+                      <Badge bg="secondary" className="badges" key={photoFile.name}>{photoFile.name}<span className="removePhotoBtn" onClick={() => _removePhoto(index)}>X</span></Badge>
                   )}
                 </ul>
               )}
@@ -209,9 +209,6 @@ function CreateEntry({ isLoaded }) {
                   </div>
                 )}
               </PlacesAutoComplete>
-              <Button type="button" variant="success" id="add-loc">
-                Add Location
-              </Button>
             </Form.Group>
 
             <Button variant="primary" type="submit">

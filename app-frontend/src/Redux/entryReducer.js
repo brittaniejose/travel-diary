@@ -19,11 +19,11 @@ export const entryManagerSlice = createSlice({
         storeEntry: (state, action) => {
             state.entry = action.payload
         },
-        storeLocations: (state, action) => {
+        storeCoords: (state, action) => {
             state.entryLocations = action.payload
         }
     }
 })
 
-export const { storeEntry, storeLocations } = entryManagerSlice.actions;
+export const { storeEntry, storeCoords } = entryManagerSlice.actions;
 export default entryManagerSlice.reducer;

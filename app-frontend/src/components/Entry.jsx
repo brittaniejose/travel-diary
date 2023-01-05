@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import localforage from "localforage";
 import { GoogleMap, Marker } from '@react-google-maps/api';
+import { storeEntry } from "../Redux/entryReducer";
+import { useDispatch } from 'react-redux';
 import Card from 'react-bootstrap/Card';
 import { useMemo } from 'react';
 
@@ -14,6 +16,7 @@ function Entry({isLoaded}) {
   const [yesPhotos, setYesPhotos] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [deleteFailure, setDeleteFailure] = useState(false);
+  const [fetched, setFetched] = useState(false)
   // ITEM STATES
   const [entry, setEntry] = useState({});
   const [locationNames, setLocationNames] = useState([]);
@@ -23,6 +26,7 @@ function Entry({isLoaded}) {
   const { tripID, entryID } = useParams();
   const asyncValue = useRef();
   const navigate = useNavigate();
+
 
   useEffect(() => {
     setIsPending(true);
@@ -49,57 +53,108 @@ function Entry({isLoaded}) {
     })
       .then((response) => response.json())
       .then((data) => {
-        if (data.message === "Access Denied") {
-          console.log("no token");
-          setSignupError(true);
-          setIsPending(false);
+        renderConditionals(data);
+        splitLocationsArray(data)
+        console.log(data, 'data ln 55')
+        // if (data.message === "Access Denied") {
+        //   console.log("no token");
+        //   setSignupError(true);
+        //   setIsPending(false);
 
-          setTimeout(() => {
-            navigate("/");
-          }, 2000);
+        //   setTimeout(() => {
+        //     navigate("/");
+        //   }, 2000);
 
-        } else if (data.message === "Token Expired") {
-          setLoginError(true);
-          setIsPending(false);
+        // } else if (data.message === "Token Expired") {
+        //   setLoginError(true);
+        //   setIsPending(false);
 
-          setTimeout(() => {
-            navigate("/");
-          }, 2000);
+        //   setTimeout(() => {
+        //     navigate("/");
+        //   }, 2000);
+          
+        // } else {
+        //   setIsPending(false);
+        //   if (data.photos) {
+        //     setYesPhotos(true);
+        //   }
+        //   // setTrip(data.trip)
 
-        } else {
-          setEntry(data.entry);
-          setTrip(data.trip)
-          console.log(data.entry.locations, "locations array ln 68")
+        //   if (data.length === 0) {
+        //     setNoEntryMsg(true);
+        //   } else {
+        //     setNoEntryMsg(false);
+        //   }
+          // console.log(data.entry.locations, "locations array ln 68")
 
           // save coordinates and location names in separate array states
-          let locNames = []
-          let coords = []
+          // let locNames = []
+          // let coords = []
 
-          for (let i = 0; i < data.entry.locations.length; i++) {
+          // for (let i = 0; i < data.entry.locations.length; i++) {
 
-            locNames.push(data.entry.locations[i].name);
-            coords.push(data.entry.locations[i].coords);
+          //   locNames.push(data.entry.locations[i].name);
+          //   coords.push(data.entry.locations[i].coords);
             
-            console.log(locNames, 'locNames ln 76')
-            console.log(coords, 'coords ln 77')
-          }
-          setLocationNames(locNames);
-          setCoordinates(coords);
+          //   console.log(locNames, 'locNames ln 76')
+          //   console.log(coords, 'coords ln 77')
+          // }
+          // setLocationNames(locNames);
+          // setCoordinates(coords);
 
-          setIsPending(false);
 
-          if (data.length === 0) {
-            setNoEntryMsg(true);
-          } else {
-            setNoEntryMsg(false);
-          }
-          if (data.entry.photos) {
-            setYesPhotos(true);
-          }
         }
-      });
+      );
     };
+
+    const renderConditionals = (data) => {
+      console.log('renderconditionals fired')
+      if (data.message === "Access Denied") {
+        console.log("no token");
+        setSignupError(true);
+        setIsPending(false);
+        
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+        
+      }  else if (data.message === "Token Expired") {
+        setLoginError(true);
+        setIsPending(false);
+
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+      } else {
+        setIsPending(false);
+        if (data.photos) {
+          setYesPhotos(true);
+        }
+        if (data.length === 0) {
+          setNoEntryMsg(true);
+        } else {
+          setNoEntryMsg(false);
+          setEntry(data);
+        }
+      }
+    }
     
+    const splitLocationsArray = (data) => {
+      let locNames = []
+      let coords = []
+
+      for (let i = 0; i < data.locations.length; i++) {
+
+        locNames.push(data.locations[i].name);
+        coords.push(data.locations[i].coords);
+        
+        console.log(locNames, 'locNames ln 76')
+        console.log(coords, 'coords ln 77')
+      }
+      setLocationNames(locNames);
+      setCoordinates(coords);
+    }
+
     const deleteEntry = () => {
       fetch(`http://localhost:4000/entries/delete/${entryID}`, {
         method: "POST",
@@ -119,7 +174,11 @@ function Entry({isLoaded}) {
       })
     }
 
-    console.log(coordinates, 'coordinates to be passed as prop')
+    const goToEditPage = () => {
+      navigate(`/edit/${entryID}`)
+    }
+
+    // console.log(coordinates, 'coordinates to be passed as prop')
   if (signupError) return <p>Please signup to continue...</p>
   if (loginError) return  <p>Your session has expired. Please login to continue...</p>
   if (!isLoaded) return <div>Loading...</div>;
@@ -132,8 +191,8 @@ function Entry({isLoaded}) {
       {/* <Card style={{ width: '60rem', height: '60rem'  }} className="entry">
         <Card.Body> */}
             <h2>{entry.title}</h2>
-            <h3>Trip: {trip.name}</h3>
-            <h4>{trip.startDate}-{trip.endDate}</h4>
+            {/* <h3>Trip: {trip.name}</h3>
+            <h4>{trip.startDate}-{trip.endDate}</h4> */}
             <div>{entry.date}</div>
             <div>{entry.content}</div>
             <div >
@@ -152,7 +211,7 @@ function Entry({isLoaded}) {
       <p>Map is centered around first location entered. Use zoom to see other locations not in view.</p>
       <Map coordinates={coordinates} />
       <button onClick={deleteEntry}>Delete Entry</button>
-      <button>Edit Entry</button>
+      <button onClick={goToEditPage}>Edit Entry</button>
     </div>
   )
 }
@@ -164,7 +223,7 @@ function Map({coordinates}) {
   useEffect(() => {
     setMapCoords(coordinates)
     setMapCenter(coordinates[0])
-  }, [coordinates])
+  }, [])
   
     console.log(mapCenter, 'mapcenter')
     console.log(mapCoords, 'mapcoords')
@@ -173,7 +232,6 @@ function Map({coordinates}) {
   const markers = mapCoords.map((geoloc, index) => {
     return <Marker key={index} position={{lat: geoloc.lat, lng: geoloc.lng}}/>
   })
-  // // {lat: mapCenter.lat, lng: mapCenter.lng}
 
   // // stops map from recentering itself on each re-render
   const center = useMemo(() => ({lat: mapCenter.lat, lng: mapCenter.lng}), [])
@@ -186,5 +244,5 @@ function Map({coordinates}) {
 }
 
 {/* <Marker position={{lat: -61.9882, lng: -58.0196}} /> */}
-export default Entry
 
+export default Entry

@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const cloudinary = require('../cloudinary');
 const { Entries, Token, Trips } = require('../models');
 const jwt = require('jsonwebtoken');
 
@@ -56,13 +57,13 @@ router.get('/:tripID', jwtToReqUser, async function(req, res) {
 router.get('/:tripID/entry/:entryID', jwtToReqUser, async function(req, res) {
     const { tripID, entryID } = req.params;
     const entry = await Entries.findOne({ where: { id: entryID }})
-    const trip = await Trips.findOne({ where: { id: tripID } })
-    const entryObj = {
-        trip: trip,
-        entry: entry
-    }
+    // const trip = await Trips.findOne({ where: { id: tripID } })
+    // const entryObj = {
+    //     trip: trip,
+    //     entry: entry
+    // }
     // console.log(entry, 'entry obj')
-    res.json(entryObj);
+    res.json(entry);
 
     // try {
     //     if (req.user) {
@@ -102,22 +103,67 @@ router.get('/:tripID/create', jwtToReqUser, async function(req, res) {
 
 // POST Route For CREATE Entry
 router.post('/:tripID/create', jwtToReqUser, async function(req, res) {
-    const { date, title, content, photos, locations } = req.body;
+    const { date, title, photos, content, locations } = req.body;
     const { tripID } = req.params;
     
-    const entry = await Entries.create({ date, title, content, photos, locations, tripID, userID: req.user.userID })
-    res.json(entry) 
+    console.log(req.body, 'req.body ln 109')
 
-    // try {
-    //     const decoded = jwt.verify(req.user, process.env.JWT_SECRET);
-    //     const userID = decoded.id;
-    // } catch (error) {
-    //    console.log(error) 
-    //    if (error.message.includes("jwt expired")) {
-    //     res.json({message: "Token Expired"})
-    //     }
-    // }
+    if (!req.files) {
+        console.log("no files found")
+    } else {
+        
+        console.log(req.files, 'req files ln 115')
+        let photos = req.files.photos;
+        console.log(photos, 'req file photos ln 110')
+    }
+
+
+    // const options = {
+    //     use_filename: true,
+    //     unique_filename: false,
+    //     overwrite: true,
+    //   };
+
+    // Upload the photos to Cloudinary
+    // const uploadedPhotos = await Promise.all(photos.map(photo => {
+    //     console.log(photo, 'photo uploaded photos fn')
+    //   return new Promise((resolve, reject) => {
+    //     cloudinary.uploader.upload(photo.name, options, (error, result) => {
+    //         try {
+    //             resolve(result)
+    //             console.log(result)
+    //         } catch (error) {
+    //             console.log(error)
+    //         }
+    //     //   if (error) {
+    //     //     reject(error);
+    //     //   } else {
+    //     //     resolve(result);
+    //     //   }
+    //     });
+    //   });
+    // }));
+  
+    // Extract the public IDs and URLs of the uploaded photos
+    // const photos = uploadedPhotos.map(photo => ({
+    //   publicID: photo.public_id,
+    //   url: photo.secure_url
+    // }));
+    
+    // const entry = await Entries.create({ date, title, content, photos, locations, tripID, userID: req.user.userID })
+    // res.json(entry) 
+
 })
+
+// try {
+//     const decoded = jwt.verify(req.user, process.env.JWT_SECRET);
+//     const userID = decoded.id;
+// } catch (error) {
+//    console.log(error) 
+//    if (error.message.includes("jwt expired")) {
+//     res.json({message: "Token Expired"})
+//     }
+// }
 
 // POST Route to DELETE Entry
 router.post('/delete/:entryID', jwtToReqUser, async function(req, res) {
@@ -147,9 +193,10 @@ router.get('/edit/:entryID', jwtToReqUser, async function(req, res) {
 // POST Route to Edit Entry
 router.post('/edit/:entryID', jwtToReqUser, async function(req, res) {
     const { entryID } = req.params;
+    const { date, title, content, photos, locations } = req.body;
 
     try {
-        await Entries.update({ where: { id: entryID }})
+        await Entries.update({date, title, content, photos, locations}, { where: { id: entryID }})
         res.status(201).json({message: "entry updated"})  
     } catch (error) {
         console.log(error)

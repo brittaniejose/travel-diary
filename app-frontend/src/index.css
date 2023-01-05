@@ -17,12 +17,28 @@ code {
   height: 50vh
 }
 
-#add-loc {
-  margin-top: 30px;
-}
+#newLocs {
+  margin-top: 20px;
+} 
 
 .removePhotoBtn {
   margin-left: 10px;
+}
+
+.removeLocNamesBtn {
+  margin-left: 10px;
+}
+
+.locations {
+  margin-top: 10px;
+}
+
+.locationsHeader {
+  margin-bottom: 10px;
+}
+
+.badges {
+  margin-right: 10px;
 }
 
 .photos {

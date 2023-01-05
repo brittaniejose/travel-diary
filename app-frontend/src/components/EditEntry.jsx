@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Button, Form, Container, Card, Row, Col, ListGroup, ListGroupItem } from "react-bootstrap";
+import { Button, Form, Container, Card, Row, Col, ListGroup, ListGroupItem, Badge } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import localforage from "localforage";
 import { useSelector, useDispatch } from "react-redux";
@@ -9,35 +9,30 @@ import PlacesAutoComplete, {
     getLatLng,
 } from "react-places-autocomplete";
 
-function EditEntry() {
+function EditEntry({isLoaded}) {
     const navigate = useNavigate();
     const asyncValue = useRef();
     const { tripID } = useParams();
     const { entryID } = useParams();
-    const entry = useSelector((state) => state.entryManager.entry)
-    const dispatch = useDispatch();
 
     // OLD PROPERTIES
-    // const [title, setTitle] = useState("");
-    // const [date, setDate] = useState("");
-    // const [content, setContent] = useState("");
-    // const [photoFiles, setPhotoFiles] = useState([]);
-    // const [entryImages, setEntryImages] = useState([]);
-    // const [locationsCollection, setLocationsCollection] = useState([]);
-    const [addressCollection, setAddressCollection] = useState([]);
+    const [oldPhotoFiles, setOldPhotoFiles] = useState([]);
+    const [oldEntryImages, setOldEntryImages] = useState([]);
+    const [oldLocationsCollection, setOldLocationsCollection] = useState([]);
 
     const [postToken, setPostToken] = useState("");
     const [address, setAddress] = useState("");
     const [coordinates, setCoordinates] = useState({lat: null, lng: null})
+    const [locationNames, setLocationNames] = useState([])
 
     // NEW PROPERTIES
     const [newtitle, setNewTitle] = useState("");
-    const [newdate, setNewDate] = useState("");
-    const [newcontent, setNewContent] = useState("");
+    const [newDate, setNewDate] = useState("");
+    const [newContent, setNewContent] = useState("");
     const [newphotoFiles, setNewPhotoFiles] = useState([]);
     const [newEntryImages, setNewEntryImages] = useState([]);
     const [newLocationsCollection, setNewLocationsCollection] = useState([]);
-    // const [newaddressCollection, setNewAddressCollection] = useState([]);
+    const [newAddressCollection, setNewAddressCollection] = useState([]);
   
     useEffect(() => {
       setTimeout(() => {
@@ -64,16 +59,42 @@ function EditEntry() {
       })
         .then((response) => response.json())
         .then((data) => {
+            previousEntry(data)
+            splitLocationsArray(data)
           if (data.message === "Access Denied") {
             navigate("/");
             console.log("no token");
           } else {
             console.log(data)
-            dispatch((storeEntry()))
           }
         });
     };
-  
+    
+    // set state to load previous entry data in form
+    const previousEntry = (data) => {
+        console.log('previous entry fn fired')
+        setNewTitle(data.title)
+        setNewDate(data.date)
+        setNewContent(data.content)
+        console.log(data.photos, 'photodata ln 111')
+        setOldEntryImages(data.photos)
+    }
+
+    // break up locations fetched locations array
+    const splitLocationsArray = (data) => {
+        let locNames = []
+        for (let i = 0; i < data.locations.length; i++) {
+
+        locNames.push(data.locations[i].name);
+        
+        console.log(locNames, 'locNames ln 76')
+        }
+        setLocationNames(locNames);
+        setOldLocationsCollection(data.locations)
+
+    }
+
+    // new photo additions
     const _addPhotos = (e) => {
       const newArray = [...newphotoFiles, ...e.target.files];
       setNewPhotoFiles(newArray)
@@ -88,12 +109,13 @@ function EditEntry() {
       setNewEntryImages(updatedArray)
     };
   
+    // removal for NEW added photos
     const _removePhoto = (index) => {
       const photoArr = [...newphotoFiles]
       console.log(index, 'index of clicked file');
   
       const selectedPhoto = photoArr.splice(index, 1)
-      const newPhotosArr = photoArr.filter((photo) => photo !== selectedPhoto )
+      const newPhotosArr = photoArr.filter((photo) => photo !== selectedPhoto)
       console.log(newPhotosArr, 'photosArr after splice');
       
       const objectsArr = [...newEntryImages]
@@ -104,7 +126,47 @@ function EditEntry() {
       setNewPhotoFiles([...newPhotosArr])
       setNewEntryImages([...newObjectsArr])
     };
+
+    const _removeOldPhoto = (index) => {
+        const photosArr = [...oldEntryImages]
+        const selectedPhoto = photosArr.splice(index, 1)
+        const newPhotosArr = photosArr.filter((photoObj) => photoObj !== selectedPhoto)
+        console.log(newPhotosArr, 'mutated OLD photos array')
+
+        setOldEntryImages([...newPhotosArr])
+    }
+
+    const _removeOldLocation = (index) => {
+        const locNameArr = [...locationNames]
+        const selectedLocName = locNameArr.splice(index, 1)
+        const newLocNameArr = locNameArr.filter((locName) => locName !== selectedLocName)
+        console.log(newLocNameArr, 'mutated locname arr')
+
+        const locationsArr = [...oldLocationsCollection]
+        const selectedLocation = locationsArr.splice(index, 1);
+        const newLocationsArr = locationsArr.filter((location) => location !== selectedLocation)
+        console.log(newLocationsArr, 'mutated full OLD locations array')
+
+        setLocationNames([...newLocNameArr])
+        setOldLocationsCollection([...newLocationsArr])
+    }
     
+    const _removeNewLocation = (index) => {
+        const addressArr = [...newAddressCollection]
+        const selectedAddress = addressArr.splice(index, 1)
+        const newAddressArr = addressArr.filter((address) => address !== selectedAddress)
+        console.log(newAddressArr, 'mutated address arr')
+
+        const locationsArr = [...newLocationsCollection]
+        const selectedLocation = locationsArr.splice(index, 1);
+        const newLocationsArr = locationsArr.filter((location) => location !== selectedLocation)
+        console.log(newLocationsArr, 'mutated full NEW locations array')
+
+        setNewAddressCollection([...newAddressArr])
+        setNewLocationsCollection([...newLocationsArr])
+    }
+
+    // new location additions
     const handleSelect = async (value) => {
       const results = await geocodeByAddress(value);
       const latLng = await getLatLng(results[0])
@@ -113,8 +175,8 @@ function EditEntry() {
       console.log(coordinates);
       console.log(address);
       const location = address;
-      const addressArr = [...addressCollection, location]
-      setAddressCollection(addressArr) 
+      const addressArr = [...newAddressCollection, location]
+      setNewAddressCollection(addressArr) 
     //   [...addressArr]
       console.log(addressArr, 'addressArr before setState')
   
@@ -127,15 +189,20 @@ function EditEntry() {
     
   
     const _handleSubmit = async (e) => {
-      // post route including token here
       e.preventDefault();
+
+      const mergedLocationsArr = [...oldLocationsCollection, ...newLocationsCollection]
+      const mergedPhotosArr = [...oldEntryImages, ...newEntryImages]
+      
+      console.log(mergedLocationsArr, 'merged locations in submit')
+      console.log(mergedPhotosArr, 'merged photos in submit')
   
       const updatedEntry = {
-        date: newdate,
+        date: newDate,
         title: newtitle,
-        content: newcontent,
-        photos: newEntryImages,
-        locations: newLocationsCollection,
+        content: newContent,
+        photos: mergedPhotosArr,
+        locations: mergedLocationsArr,
       }
   
       const response = await fetch(`http://localhost:4000/entries/edit/${entryID}`, {
@@ -145,8 +212,13 @@ function EditEntry() {
       })
   
       const resEntry = await response.json();
-      console.log(resEntry, 'create entry post response')
-      navigate(`/entries/${tripID}/entry/${entryID}`);
+      console.log(resEntry, 'create entry post response');
+
+      if (resEntry.message === "entry updated") {
+        navigate(`/entries/${tripID}/entry/${entryID}`);
+      } else {
+        console.log('update not successful')
+      }
   
     };
   
@@ -161,6 +233,7 @@ function EditEntry() {
                 <Form.Group as={Col} controlId="formEntryTitle">
                   <Form.Label>Title</Form.Label>
                   <Form.Control
+                    value={newtitle}
                     type="text"
                     placeholder="Enter Entry Title (Optional)"
                     onChange={(e) => setNewTitle(e.target.value)}
@@ -169,6 +242,7 @@ function EditEntry() {
                 <Form.Group as={Col} controlId="formDate">
                   <Form.Label>Date</Form.Label>
                   <Form.Control
+                    value={newDate}
                     type="date"
                     placeholder="Enter Entry Date"
                     onChange={(e) => setNewDate(e.target.value)}
@@ -179,6 +253,7 @@ function EditEntry() {
               <Form.Group className="mb-3" controlId="formContent">
                 <Form.Label>Content</Form.Label>
                 <Form.Control
+                  value={newContent}
                   as="textarea"
                   placeholder="Write about your day here"
                   onChange={(e) => setNewContent(e.target.value)}
@@ -190,12 +265,20 @@ function EditEntry() {
                 <Form.Control type="file" id='fileInput' onChange={_addPhotos} multiple />
               </Form.Group>
               <Form.Group className="mb-3" controlId="formPhotosList">
-                {newphotoFiles.length > 0 && (
-                  <ul>
-                    {newphotoFiles.map((photoFile, index) => 
-                      <li key={photoFile.name}>{photoFile.name}<span className="removePhotoBtn" onClick={() => _removePhoto(index)}>X</span></li>
+                {oldEntryImages.length > 0 && (
+                  <>
+                    {oldEntryImages.map((entryImg, index) => 
+                      <Badge bg="secondary" className="badges" key={index}>{entryImg.fileName}<span className="removePhotoBtn" onClick={() => _removeOldPhoto(index)}>X</span></Badge>
                     )}
-                  </ul>
+                  </>
+                )}
+                {newphotoFiles.length > 0 && (
+                  <>
+
+                    {newphotoFiles.map((photoFile, index) => 
+                      <Badge bg="secondary" className="badges" key={photoFile.name}>{photoFile.name}<span className="removePhotoBtn" onClick={() => _removePhoto(index)}>X</span></Badge>
+                    )}
+                  </>
                 )}
               </Form.Group>
   
@@ -227,11 +310,23 @@ function EditEntry() {
                     </div>
                   )}
                 </PlacesAutoComplete>
-                <p>Current Locations</p>
-                <p>New Locations</p>
-                <Button type="button" variant="success" id="add-loc">
-                  Add Location
-                </Button>
+                <div className="locations">
+                    <div className="locationsHeader">Locations: </div>
+                {locationNames.length > 0 && (
+                    <>
+                {locationNames.map((location, index) => 
+                    <Badge bg="secondary" className="badges" key={index}>{location} <span onClick={() => _removeOldLocation(index)} className="removeLocNamesBtn">X</span></Badge>
+                    )}
+                    </>
+                )}
+                {newAddressCollection.length > 0 && (
+                    <>
+                {newAddressCollection.map((address, index) => 
+                    <Badge bg="secondary" className="badges" key={index}>{address} <span className="removeLocNamesBtn" onClick={() => _removeNewLocation(index)}>X</span></Badge>
+                    )}
+                    </>
+                )}
+                </div>
               </Form.Group>
   
               <Button variant="primary" type="submit">
