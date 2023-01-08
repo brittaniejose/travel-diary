@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button, Form, Container, Card, Row, Col, ListGroup, ListGroupItem, Badge } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
+import ModalMessage from "./ModalMessage";
+import FlashAlert from "./FlashAlert";
 import localforage from "localforage";
 import { useSelector, useDispatch } from "react-redux";
 import { storeEntry } from '../Redux/entryReducer';
@@ -15,6 +17,8 @@ function EditEntry({isLoaded}) {
     const { tripID } = useParams();
     const { entryID } = useParams();
 
+    const [editSuccess, setEditSuccess] = useState(false);
+    const [tokenError, setTokenError] = useState(false);
     // OLD PROPERTIES
     const [oldPhotoFiles, setOldPhotoFiles] = useState([]);
     const [oldEntryImages, setOldEntryImages] = useState([]);
@@ -62,7 +66,7 @@ function EditEntry({isLoaded}) {
             previousEntry(data)
             splitLocationsArray(data)
           if (data.message === "Access Denied") {
-            navigate("/");
+            setTokenError(true)
             console.log("no token");
           } else {
             console.log(data)
@@ -96,12 +100,15 @@ function EditEntry({isLoaded}) {
 
     // new photo additions
     const _addPhotos = (e) => {
+      const urlsArray = ["https://expertvagabond.com/wp-content/uploads/antarctica-sunset-landscape-900x600.jpg", "https://images.r.cruisecritic.com/slideshows/2019/AntarcticaCruising.jpg", 'https://expertvagabond.com/wp-content/uploads/antarctica-ice-arch-900x600.jpg',]
+
+
       const newArray = [...newphotoFiles, ...e.target.files];
       setNewPhotoFiles(newArray)
       console.log(newArray, "photos array updated");
-      const filesAndUrls = newArray.map((file) => ({
+      const filesAndUrls = newArray.map((file, index) => ({
         ...file,
-        url: URL.createObjectURL(file),
+        url: urlsArray[index], 
         fileName: file.name,
       }));
       const updatedArray = [...filesAndUrls];
@@ -215,18 +222,24 @@ function EditEntry({isLoaded}) {
       console.log(resEntry, 'create entry post response');
 
       if (resEntry.message === "entry updated") {
-        navigate(`/entries/${tripID}/entry/${entryID}`);
+        setEditSuccess(true);
+        setTimeout(() => {
+          navigate(`/entries/${tripID}/entry/${entryID}`);
+        }, 2000)
       } else {
         console.log('update not successful')
       }
   
     };
   
+    if (tokenError) return <ModalMessage content="Your session has expired. Please login to continue..."/>
     if (!isLoaded) return <div>Loading...</div>;
     return (
-      <Container>
-        <h2>Create Entry</h2>
-        <Card>
+      <Container className="bgImg">
+        { editSuccess ? <FlashAlert content="Entry Successfully Updated" variant="warning" /> : null }
+        <div id="editEntry">
+        <h2><Badge bg="dark">Edit Entry</Badge></h2>
+        <Card style={{ width: "50rem" }}>
           <Card.Body>
             <Form onSubmit={(e) => _handleSubmit(e)}>
               <Row className="mb-3">
@@ -335,6 +348,7 @@ function EditEntry({isLoaded}) {
             </Form>
           </Card.Body>
         </Card>
+        </div>
       </Container>
     );
   }

@@ -2,10 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Suspense, lazy } from 'react';
 import NavLayout from "./components/NavLayout";
 import Home from "./components/Home";
-// import Trips from "./components/Trips";
+import Trips from "./components/Trips";
 import Signup from "./components/Signup";
 import Login from "./components/Login";
 import Profile from "./components/Profile";
@@ -18,7 +17,6 @@ import { store } from "./Redux/store";
 import { Provider } from "react-redux";
 import { useLoadScript } from "@react-google-maps/api";
 
-const Trips = lazy(() => import("./components/Trips"));
 const libraries = ["places"]
 
 export default function App() {
@@ -28,7 +26,7 @@ export default function App() {
   })
   return (
     <BrowserRouter>
-      <Suspense fallback={<div>Loading...</div>}>
+      
       <Routes>
         <Route path="/" element={<NavLayout />}>
           <Route index element={<Home />} />
@@ -43,7 +41,7 @@ export default function App() {
           <Route path="/edit/:entryID" element={<EditEntry isLoaded={isLoaded}/>} />
         </Route>
       </Routes>
-      </Suspense>
+     
     </BrowserRouter>
   );
 }

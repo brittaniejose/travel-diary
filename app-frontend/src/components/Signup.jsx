@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { Button, Form, Container, Card, Badge } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { saveUser } from "../Redux/usersReducer";
 import { useNavigate } from "react-router-dom";
+import FlashAlert from "./FlashAlert";
 import localforage from "localforage";
 
 function Signup() {
@@ -11,6 +13,7 @@ function Signup() {
   const [password, setPassword] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [emailError, setEmailError] = useState(false);
+  const [signUpSuccess, setSignUpSuccess] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -46,7 +49,10 @@ function Signup() {
       const token = resUser.token;
       storeToken(token);
       console.log(`${resUser.user.firstName} has signed up`)
-      navigate("/");
+      setSignUpSuccess(true)
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
     };
   };
 
@@ -57,40 +63,58 @@ function Signup() {
   };
 
   return (
-    <div>
-      <h1>Sign Up</h1>
+    <Container className="bgImg">
+      {signUpSuccess ? <FlashAlert content="Thanks for joining!" variant="success" /> : null}
+      <div id="signUp">
+      <h1><Badge bg="primary">Sign Up</Badge></h1>
       {isPending ? <p>Redirecting you to homepage</p> : null}
-      <form>
-        <label>First Name</label>
-        <input
+      <Card style={{ width: "60rem" }}>
+        <Card.Body>
+      <Form>
+        <Form.Group className="mb-3">
+        <Form.Label>First Name</Form.Label>
+        <Form.Control
           type="text"
           placeholder="eg: Luke"
           onChange={(e) => setFirstName(e.target.value)}
         />
-        <label>Last Name</label>
-        <input
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+        <Form.Label>Last Name</Form.Label>
+        <Form.Control
           type="text"
           placeholder="eg: Skywalker"
           onChange={(e) => setLastName(e.target.value)}
         />
-        <label>Email</label>
-        <input
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+        <Form.Label>Email</Form.Label>
+        <Form.Control
           type="text"
           placeholder="eg: me@google.com"
           onChange={(e) => setEmail(e.target.value)}
         />
         { emailError ? <p>This email is already registered</p> : null }
-        <label>Password</label>
-        <input
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+        <Form.Label>Password</Form.Label>
+        <Form.Control
           type="password"
           placeholder="Your Password Here"
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type="button" onClick={(e) => handleSubmit(e)}>
+        </Form.Group>
+        <Button variant="primary" type="button" onClick={(e) => handleSubmit(e)}>
           Sign Up
-        </button>
-      </form>
-    </div>
+        </Button>
+      </Form>
+      </Card.Body>
+      </Card>
+      </div>
+    </Container>
   );
 }
 

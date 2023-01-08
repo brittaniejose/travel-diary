@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import FlashAlert from "./FlashAlert";
 import { Button, Form, Container, Card, Row, Col, ListGroup, ListGroupItem, Badge } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import localforage from "localforage";
@@ -21,6 +22,8 @@ function CreateEntry({ isLoaded }) {
   const [postToken, setPostToken] = useState("");
   const [address, setAddress] = useState("");
   const [coordinates, setCoordinates] = useState({lat: null, lng: null})
+  const [entrySuccess, setEntrySuccess] = useState(false);
+
 
   useEffect(() => {
     setTimeout(() => {
@@ -57,19 +60,22 @@ function CreateEntry({ isLoaded }) {
   };
 
   const _addPhotos = (e) => {
+    const urlsArray = ["https://media.istockphoto.com/id/465992166/photo/iceberg-floats-in-andord-bay-on-graham-land-antarctica.jpg?s=612x612&w=0&k=20&c=poF2Q0yFzpWGKlOlM_o3NaFD9Kwgm5U84pZt8Ivqmo0=", "https://media.istockphoto.com/id/91657948/photo/magical-home-of-penguins.jpg?s=612x612&w=0&k=20&c=GGcZJ-T3WZljh5jnxGWnPdjii2FuKJZPndbwqRwCaSI=", "https://upload.wikimedia.org/wikipedia/commons/7/77/Punta_arenas_city.jpg", "https://images.r.cruisecritic.com/slideshows/2019/AntarcticaCruising.jpg", "https://expertvagabond.com/wp-content/uploads/antarctica-sunset-landscape-900x600.jpg", 'https://expertvagabond.com/wp-content/uploads/antarctica-ice-arch-900x600.jpg',]
+
     const newArray = [...photoFiles, ...e.target.files];
     setPhotoFiles(newArray)
     console.log(newArray, "photos array updated");
-    // const filesAndUrls = newArray.map((file) => ({
-    //   ...file,
-    //   url: URL.createObjectURL(file),
-    //   fileName: file.name,
-    // }));
-    // const updatedArray = [...filesAndUrls];
-    // console.log(updatedArray, 'files and urls array');
-    // setEntryImages(updatedArray)
+ 
+    const filesAndUrls = newArray.map((file, index) => ({
+      ...file,
+      url: urlsArray[index], 
+      fileName: file.name,
+    }));
+    const updatedArray = [...filesAndUrls];
+    console.log(updatedArray, 'files and urls array');
+    setEntryImages(updatedArray)
   };
-
+  // `blob:http:localhost:3000/app-frontend/public/entry-images/${file.name}`
   const _removePhoto = (index) => {
     const photoArr = [...photoFiles]
     console.log(index, 'index of clicked file');
@@ -78,13 +84,13 @@ function CreateEntry({ isLoaded }) {
     const newPhotosArr = photoArr.filter((photo) => photo !== selectedPhoto )
     console.log(newPhotosArr, 'photosArr after splice');
     
-    // const objectsArr = [...entryImages]
-    // const selectedImgObj = objectsArr.splice(index, 1);
-    // const newObjectsArr = objectsArr.filter((imgObj) => imgObj !== selectedImgObj)
-    // console.log(newObjectsArr, 'entry images after splice')
+    const objectsArr = [...entryImages]
+    const selectedImgObj = objectsArr.splice(index, 1);
+    const newObjectsArr = objectsArr.filter((imgObj) => imgObj !== selectedImgObj)
+    console.log(newObjectsArr, 'entry images after splice')
 
     setPhotoFiles([...newPhotosArr])
-    // setEntryImages([...newObjectsArr])
+    setEntryImages([...newObjectsArr])
   };
   
   const handleSelect = async (value) => {
@@ -111,11 +117,12 @@ function CreateEntry({ isLoaded }) {
     // post route including token here
     e.preventDefault();
 
+    console.log(photoFiles, 'photofiles ln 115')
     const newEntry = {
       date: date,
       title: title,
       content: content,
-      photos: photoFiles,
+      photos: entryImages,
       locations: locationsArray,
     }
 
@@ -127,15 +134,23 @@ function CreateEntry({ isLoaded }) {
 
     const resEntry = await response.json();
     console.log(resEntry, 'create entry post response')
-    navigate(`/entries/${tripID}`);
+    if (resEntry.message === "Entry Successfully Created") {
+      setEntrySuccess(true);
 
+      setTimeout(() => {
+        navigate(`/entries/${tripID}`);
+      }, 2000);
+    }
   };
 
   if (!isLoaded) return <div>Loading...</div>;
   return (
-    <Container>
-      <h2>Create Entry</h2>
-      <Card>
+    <Container className=" bgImg">
+      {entrySuccess ? <FlashAlert content="Entry Successfully Created" variant="success" /> : null}
+
+      <div className="create-entry">
+      <h2><Badge bg="dark">Create Entry</Badge></h2>
+      <Card style={{ width: "70rem" }}>
         <Card.Body>
           <Form onSubmit={(e) => _handleSubmit(e)}>
             <Row className="mb-3">
@@ -168,7 +183,7 @@ function CreateEntry({ isLoaded }) {
 
             <Form.Group className="mb-3">
               <Form.Label>Add Photos</Form.Label>
-              <Form.Control type="file" id='fileInput' accept="image/*" onChange={_addPhotos} multiple />
+              <Form.Control type="file" id='fileInput' name="photos" accept="image/*" onChange={_addPhotos} multiple />
             </Form.Group>
             <Form.Group className="mb-3" controlId="formPhotosList">
               {photoFiles.length > 0 && (
@@ -217,6 +232,7 @@ function CreateEntry({ isLoaded }) {
           </Form>
         </Card.Body>
       </Card>
+      </div>
     </Container>
   );
 }

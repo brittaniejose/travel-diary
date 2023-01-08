@@ -1,5 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
+import ModalMessage from "./ModalMessage";
+import FlashAlert from "./FlashAlert";
+import { Button, Container, Badge, ListGroup, ListGroupItem, Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import Spinner from 'react-bootstrap/Spinner';
 import localforage from "localforage";
 
 function Trips() {
@@ -8,6 +12,9 @@ function Trips() {
   const [loginError, setLoginError] = useState(false);
   const [noTripsMsg, setNoTripsMsg] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const [postToken, setPostToken] = useState("");
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [deleteFailure, setDeleteFailure] = useState(false);
   const navigate = useNavigate();
   const asyncValue = useRef();
 
@@ -25,6 +32,7 @@ function Trips() {
            const token = `Bearer ${authToken}`;
           //  console.log(token, 'token ln 26 trips comp')
            getTrips(token)
+           setPostToken(token);
          }
        });
     }, 1000);
@@ -34,6 +42,7 @@ function Trips() {
 
 
 const getTrips = (token) => {
+  console.log(token, "token trips comp ln 39")
   fetch("http://localhost:4000/trips", {
     method: "GET",
     headers: { "Content-Type": "application/json", Authorization: token },
@@ -43,16 +52,10 @@ const getTrips = (token) => {
       if (trips.message === "Access Denied") {
         setSignupError(true)
         setIsPending(false);
-        setTimeout(() => {
-          navigate('/');
-        }, 2000)
         console.log('no token')
       } else if (trips.message === "Token Expired") {
         setLoginError(true)
         setIsPending(false);
-        setTimeout(() => {
-          navigate('/');
-        }, 2000)
       } else {
         setTrips(trips);
         setIsPending(false);
@@ -66,42 +69,71 @@ const getTrips = (token) => {
 };
 console.log(trips, "trips array");
 
-const handleClick = (e, id) => {
+const handleClick = (id) => {
 	const tripID = id
 	navigate(`/entries/${tripID}`)
+}
+
+const handleDelete = (id) => {
+  const tripID = id
+  console.log(tripID, 'TRIP ID ln 79')
+  fetch(`http://localhost:4000/trips/delete/${tripID}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: postToken },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.message === "trip deleted") {
+        setDeleteSuccess(true);
+        setDeleteFailure(false);
+        setTimeout(() => {
+          navigate(`/`);
+        }, 2000);
+      } else {
+        setDeleteFailure(true);
+      }
+    });
 }
 
 const goToCreate = () => {
   navigate('/trips/create')
 };
 
-if (signupError) return <p>Please signup to continue...</p>
-if (loginError) return  <p>Your session has expired. Please login to continue...</p>
+if (signupError) return <ModalMessage content="Please signup to continue..."/>;
+if (loginError)
+  return <ModalMessage content="Your session has expired. Please login to continue..."/>;
 return (
-  <div>
-    <h1>Your Trips</h1>
-    { isPending ? <p>Loading...</p> : null }
-    { noTripsMsg ? <p>You have no trips yet</p> : null }
+  <Container className="bgImg">
+    { deleteSuccess ? <FlashAlert content="Trip deleted" variant="danger" /> : null }
+    <div className="listPages">
+    <h1 className="listPageHeader"><Badge bg="dark">Your Trips</Badge></h1>
+    { isPending ? <Spinner animation="border" variant="light" /> : null }
+    { noTripsMsg ? <Card style={{width: "50%"}}><Card.Body>You have no trips yet</Card.Body></Card> : null }
     <div className="trips">
       {trips.map((trip) => (
-        <div key={trip.id}>
-          <div>
+        <ListGroup key={trip.id} >
+          <ListGroupItem className="listGroups" style={{ width: '60rem' }}>
+          <h4>
           {trip.name}
-          </div>
-          <div>
+          </h4>
+          <h4>
+            <span className="labels">Start Date:</span>
           {trip.startDate}
-          </div>
-          <div>
+          </h4>
+          <h4>
+          <span className="labels">End Date:</span>
           {trip.endDate}
-          </div>
-
-          <button onClick={(e) => handleClick(e, trip.id)}>See Entries</button>      
-
-        </div>
+          </h4>
+          <Button onClick={() => handleClick(trip.id)} variant="primary">See Entries</Button>
+          <Button onClick={() => handleDelete(trip.id)} variant="danger">Delete Trip</Button>      
+          </ListGroupItem>
+        </ListGroup>
       ))}
-      <button onClick={(e) => goToCreate(e)}>Create Trip</button>
+      <h2><Badge onClick={goToCreate} bg="success">Create Trip</Badge></h2>
+      
     </div>
-  </div>
+    </div>
+  </Container>
 );
 }
 

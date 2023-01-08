@@ -28,7 +28,8 @@ router.post('/signup', async function(req, res, next) {
   
     const authUser = {
       user: user,
-      token: auth.token
+      token: auth.token,
+      message: "Thank you for joining. Redirecting you to the homepage."
     }
     res.json(authUser);   
   } else {
@@ -51,7 +52,8 @@ router.post('/login', async function(req, res) {
 
       const authUser = {
         user: user,
-        token: token.token
+        token: token.token,
+        message: "Login Successful"
       }
 
       res.json(authUser)
