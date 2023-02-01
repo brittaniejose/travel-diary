@@ -1,8 +1,11 @@
+if(process.env.NODE_ENV !== 'production'){
+    require ('dotenv').config()
+  }
+
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-require('dotenv').config();
 const cors = require('cors');
 const fileUpload = require('express-fileupload');
 

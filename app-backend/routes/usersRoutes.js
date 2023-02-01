@@ -17,6 +17,7 @@ router.post('/signup', async function(req, res, next) {
   const existingUser = await User.findOne({ where: { email: email }});
 
   if (!existingUser) {
+
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
     
