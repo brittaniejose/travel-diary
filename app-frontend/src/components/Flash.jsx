@@ -1,11 +1,11 @@
 import React from 'react'
 
-function AddTrip() {
+function Flash() {
   return (
     <div>
-      Add Trip Form
+      Login Successful
     </div>
   )
 }
 
-export default AddTrip
+export default Flash

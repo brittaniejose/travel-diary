@@ -22,8 +22,8 @@ module.exports = (sequelize, DataTypes) => {
     date: DataTypes.DATEONLY,
     title: DataTypes.STRING,
     content: DataTypes.STRING,
-    photos: DataTypes.ARRAY(DataTypes.INTEGER),
-    locations: DataTypes.ARRAY(DataTypes.INTEGER),
+    photos: DataTypes.ARRAY(DataTypes.JSON),
+    locations: DataTypes.ARRAY(DataTypes.JSON),
     tripID: DataTypes.INTEGER,
     userID: DataTypes.INTEGER
   }, {

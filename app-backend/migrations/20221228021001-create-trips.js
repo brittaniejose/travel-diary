@@ -10,10 +10,41 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       startDate: {
-        type: Sequelize.DATEONLY
+        type: Sequelize.DATEONLY,
+        validate: {
+          isBetween: {
+            args: ["1900-01-01", new Date().toLocaleDateString("fr-CA")],
+            msg: "The date must be between 1900 and 2100"
+          },
+          notNull: {
+            args: [true],
+            msg: "Please enter a start date"
+          },
+          notEmpty: {
+            args: [true],
+            msg: "Please enter a start date"
+          }, 
+        }
       },
       endDate: {
-        type: Sequelize.DATEONLY
+        type: Sequelize.DATEONLY,
+        validate: {
+          isAfter: {
+            args: ["startDate"],
+            msg: "The end date must be after the start date"
+          },
+          notNull: {
+            args: [true],
+            msg: "Please enter an end date"
+          },
+          notEmpty: {
+            args: [true],
+            msg: "Please enter an end date"
+          }, 
+        }
+      },
+      name: {
+        type: Sequelize.STRING
       },
       userID: {
         type: Sequelize.INTEGER,
