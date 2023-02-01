@@ -32,16 +32,16 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, './dist')));
 app.use(cors(corsOptions));
 app.use(fileUpload({
     createParentPath: true
 }));
 
-app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/trips', tripRouter);
 app.use('/entries', entryRouter);
+app.use('/', indexRouter);
 
 
 
